@@ -17,7 +17,9 @@ SRC = pathlib.Path(__file__).parent.parent / "src" / "meshlite"
 def _collect_imports(filepath: pathlib.Path) -> list[str]:
     """Return all imported module names from a Python file."""
     try:
-        tree = ast.parse(filepath.read_text(), filename=str(filepath))
+        tree = ast.parse(
+            filepath.read_text(encoding="utf-8"), filename=str(filepath)
+        )
     except SyntaxError:
         return []
 
