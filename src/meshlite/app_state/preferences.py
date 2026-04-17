@@ -41,10 +41,10 @@ class Preferences:
     mesh_color: tuple[float, float, float] = (0.6, 0.6, 0.65)
     selected_mesh_color: tuple[float, float, float] = (0.35, 0.55, 0.80)
 
-    # Lighting
-    ambient_strength: float = 0.2
-    specular_strength: float = 0.4
-    specular_exponent: float = 35.0
+    # Lighting (matches the reference meshviewer look)
+    ambient_strength: float = 0.35
+    specular_strength: float = 0.6
+    specular_exponent: float = 64.0
 
     # History
     undo_max_depth: int = 20

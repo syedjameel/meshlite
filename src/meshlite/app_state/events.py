@@ -55,6 +55,17 @@ class NodeMeshReplaced:
 
 
 @dataclass(frozen=True)
+class NodeVisibilityChanged:
+    """Emitted when a node's ``visible`` flag is toggled.
+
+    Used by the camera to refit to the new set of visible meshes.
+    """
+
+    node_id: str
+    visible: bool
+
+
+@dataclass(frozen=True)
 class SelectionChanged:
     primary: str | None
     selected: tuple[str, ...]

@@ -17,6 +17,7 @@ from .events import (
     NodeAdded,
     NodeMeshReplaced,
     NodeRemoved,
+    NodeVisibilityChanged,
     OpCanceled,
     OpCompleted,
     OpFailed,
@@ -25,8 +26,8 @@ from .events import (
     SelectionChanged,
 )
 from .history import HistoryEntry, UndoStack
-from .preferences import Preferences
 from .node import DocumentNode
+from .preferences import Preferences
 from .selection_model import SelectionModel
 from .task_runner import TaskRunner
 from .transform import Transform
@@ -42,6 +43,7 @@ __all__ = [
     "NodeAdded",
     "NodeMeshReplaced",
     "NodeRemoved",
+    "NodeVisibilityChanged",
     "OpCanceled",
     "OpCompleted",
     "OpFailed",

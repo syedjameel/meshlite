@@ -44,10 +44,11 @@ class SidebarOutlinerPanel(BasePanel):
         is_selected = node.id in sel.selected
         node_id = node.id
 
-        # Visibility eye toggle
+        # Visibility eye toggle (routes through Document so the camera
+        # can refit to the new visible set).
         eye = icons.safe(icons.EYE if node.visible else icons.EYE_CLOSED)
         if imgui.small_button(f"{eye}##vis_{node_id}"):
-            node.visible = not node.visible
+            self._app.document.toggle_visible(node_id)
         imgui.same_line()
 
         # Selectable row — whole remaining width
@@ -81,7 +82,7 @@ class SidebarOutlinerPanel(BasePanel):
             if imgui.menu_item("Select", "", False)[0]:
                 sel.set([node_id])
             if imgui.menu_item("Toggle Visibility", "", False)[0]:
-                node.visible = not node.visible
+                self._app.document.toggle_visible(node_id)
             imgui.separator()
             if imgui.menu_item(f"{icons.safe(icons.TRASH)} Delete", "", False)[0]:
                 self._app.document.remove_node(node_id)

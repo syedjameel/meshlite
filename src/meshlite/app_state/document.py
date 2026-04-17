@@ -17,7 +17,13 @@ from pathlib import Path
 
 from meshlite.domain.mesh_data import MeshData
 
-from .events import EventBus, NodeAdded, NodeMeshReplaced, NodeRemoved
+from .events import (
+    EventBus,
+    NodeAdded,
+    NodeMeshReplaced,
+    NodeRemoved,
+    NodeVisibilityChanged,
+)
 from .node import DocumentNode
 
 
@@ -87,6 +93,32 @@ class Document:
         node.mesh = new_mesh
         node.info_cache = None
         self._events.emit(NodeMeshReplaced(node_id=node_id))
+
+    # ------------------------------------------------------------------
+    # Visibility
+    # ------------------------------------------------------------------
+
+    def set_visible(self, node_id: str, visible: bool) -> bool:
+        """Toggle a node's visibility. Emits :class:`NodeVisibilityChanged`.
+
+        Returns True if the state actually changed. The camera subscribes
+        to this event to refit to the new set of visible meshes so the
+        user can zoom/orbit around what they're actually looking at.
+        """
+        node = self._nodes.get(node_id)
+        if node is None:
+            return False
+        if node.visible == visible:
+            return False
+        node.visible = visible
+        self._events.emit(NodeVisibilityChanged(node_id=node_id, visible=visible))
+        return True
+
+    def toggle_visible(self, node_id: str) -> bool:
+        node = self._nodes.get(node_id)
+        if node is None:
+            return False
+        return self.set_visible(node_id, not node.visible)
 
     # ------------------------------------------------------------------
     # Read accessors

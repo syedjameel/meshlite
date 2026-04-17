@@ -51,9 +51,12 @@ void main() {
     vec3 L = normalize(light_pos - v_position);
     vec3 V = normalize(view_pos - v_position);
     vec3 R = reflect(-L, N);
+    vec3 ambient = ambient_strength * vec3(1.0);
     float NdotL = max(dot(N, L), 0.0);
-    float spec = pow(max(dot(R, V), 0.0), specular_exponent);
-    vec3 result = (ambient_strength + NdotL + specular_strength * spec) * object_color;
+    vec3 diffuse = NdotL * vec3(1.0);
+    float spec = pow(max(dot(V, R), 0.0), specular_exponent);
+    vec3 specular = specular_strength * spec * vec3(1.0);
+    vec3 result = (ambient + diffuse + specular) * object_color;
     f_color = vec4(clamp(result, 0.0, 1.0), 1.0);
 }
 """

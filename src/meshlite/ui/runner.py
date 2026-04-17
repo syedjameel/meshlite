@@ -38,13 +38,14 @@ from meshlite.app_state.events import (
     NodeAdded,
     NodeMeshReplaced,
     NodeRemoved,
+    NodeVisibilityChanged,
     OpCanceled,
     OpCompleted,
     OpFailed,
     OpStarted,
 )
-from meshlite.app_state.preferences import Preferences
 from meshlite.app_state.node import DocumentNode
+from meshlite.app_state.preferences import Preferences
 from meshlite.ops.io.load_mesh import LoadMeshOperation
 from meshlite.ops.io.save_mesh import SaveMeshOperation
 from meshlite.render import (
@@ -149,6 +150,7 @@ class UIRunner:
         bus.subscribe(NodeAdded, self._on_node_added)
         bus.subscribe(NodeRemoved, self._on_node_removed)
         bus.subscribe(NodeMeshReplaced, self._on_node_mesh_replaced)
+        bus.subscribe(NodeVisibilityChanged, self._on_node_visibility_changed)
 
     # -- op lifecycle --
 
@@ -204,6 +206,12 @@ class UIRunner:
         node.gpu_upload_failed = False
         self.upload_node(node)
 
+    def _on_node_visibility_changed(self, _e: NodeVisibilityChanged) -> None:
+        """Refit camera to the new set of visible meshes so the user can
+        orbit/zoom around what they're actually looking at."""
+        if self._app.document.visible_nodes():
+            self.fit_camera_to_document()
+
     # ------------------------------------------------------------------
     # GPU upload + camera framing — public so panels can call them
     # ------------------------------------------------------------------
@@ -226,13 +234,12 @@ class UIRunner:
                 f"GPU upload failed for {node.name}: {e}",
             )
 
-    def fit_camera_to_document(self) -> None:
-        if self.camera is None:
-            return
+    def _visible_bbox_center(self):
+        """Return the world-space center of the union bbox of visible nodes,
+        or ``None`` if there are no visible nodes."""
         nodes = list(self._app.document.visible_nodes())
         if not nodes:
-            return
-        # Compute the union bounding box of all visible nodes.
+            return None
         from pyglm import glm
         bb_min = [float("inf")] * 3
         bb_max = [float("-inf")] * 3
@@ -244,7 +251,41 @@ class UIRunner:
             bb_max[0] = max(bb_max[0], xx)
             bb_max[1] = max(bb_max[1], yx)
             bb_max[2] = max(bb_max[2], zx)
-        # Center the camera on the bbox center.
+        return glm.vec3(
+            (bb_min[0] + bb_max[0]) / 2,
+            (bb_min[1] + bb_max[1]) / 2,
+            (bb_min[2] + bb_max[2]) / 2,
+        )
+
+    def recenter_pivot_on_visible(self) -> None:
+        """Snap the orbit pivot to the visible bbox center, preserving view.
+
+        Called on rotate-start so rotation always orbits around the mesh
+        the user is actually looking at — regardless of prior pan/zoom drift.
+        """
+        if self.camera is None:
+            return
+        center = self._visible_bbox_center()
+        if center is not None:
+            self.camera.set_target_preserve_view(center)
+
+    def fit_camera_to_document(self) -> None:
+        if self.camera is None:
+            return
+        nodes = list(self._app.document.visible_nodes())
+        if not nodes:
+            return
+        bb_min = [float("inf")] * 3
+        bb_max = [float("-inf")] * 3
+        for n in nodes:
+            (xn, yn, zn), (xx, yx, zx) = n.mesh.bounding_box()
+            bb_min[0] = min(bb_min[0], xn)
+            bb_min[1] = min(bb_min[1], yn)
+            bb_min[2] = min(bb_min[2], zn)
+            bb_max[0] = max(bb_max[0], xx)
+            bb_max[1] = max(bb_max[1], yx)
+            bb_max[2] = max(bb_max[2], zx)
+        from pyglm import glm
         center = glm.vec3(
             (bb_min[0] + bb_max[0]) / 2,
             (bb_min[1] + bb_max[1]) / 2,
@@ -253,7 +294,7 @@ class UIRunner:
         max_extent = max(bb_max[i] - bb_min[i] for i in range(3))
         if max_extent > 0:
             self.camera.set_target(center)
-            self.camera.set_zoom(max_extent * 3.0)
+            self.camera.set_zoom(max_extent * 2.5)
 
     # ------------------------------------------------------------------
     # File menu commands — used by both the menu bar and the toolbar

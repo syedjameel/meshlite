@@ -1,5 +1,60 @@
 # Changelog
 
+## v0.3.0 (2026-04-18)
+
+Production hardening release. Camera and rendering rewritten for
+inspection-grade navigation; several patch-level workarounds in the
+previous release were replaced with proper solutions.
+
+### New Features
+
+- **Production arcball camera** — true hemisphere arcball rotation,
+  view-space pan (orbit pivot stays locked to the geometry during pan),
+  and zoom-toward-cursor. Near/far planes now scale with zoom so depth
+  precision stays usable from sub-millimeter to terrain scales.
+- **Flat shading for crisp CAD look** — GPU upload now expands each
+  triangle into 3 unique vertices carrying the face normal, producing
+  the crisp-edged appearance of trimesh/meshviewer instead of the
+  rounded look of MeshLib's per-vertex averaged normals.
+- **Auto pivot-snap on rotate-start** — rotation now always orbits
+  around the visible mesh center, absorbing any prior pan/zoom drift
+  without a visible jump.
+- **`NodeVisibilityChanged` event** — outliner visibility toggles now
+  emit an event and the camera auto-refits to the remaining visible
+  nodes.
+
+### Bug Fixes
+
+- **NaN normals on degenerate faces** — zero-area triangles (collinear
+  or duplicate vertices) used to produce zero-length normals that
+  the fragment shader turned into NaN, rendering black/garbage pixels.
+  They now get a placeholder unit vector and a logged warning.
+- **Stuck drag state on focus loss** — releasing the mouse outside the
+  viewport (Alt-Tab mid-drag, drag off-window) no longer leaves the
+  viewport in a permanent rotating/panning state; the next frame
+  reconciles against the real mouse button state.
+- **NaN pivot corruption** — `set_target_preserve_view` now rejects
+  non-finite targets, so a degenerate mesh bbox can no longer corrupt
+  the camera's view matrix.
+- **Shader/docstring honesty gap** — removed an unused hardcoded fill
+  light that had docstring claiming it was user-configurable.
+
+### Improvements
+
+- **Shader parity CI test** — new `test_shader_loader` asserts the
+  embedded fallback shader declares the same uniforms as the on-disk
+  asset shader, so future drift fails CI instead of silently diverging.
+- **Camera magic numbers named** — `ARCBALL_SENSITIVITY` and
+  `ZOOM_CURSOR_MIN_DENOM` replace bare literals in `camera.py`, with
+  comments explaining the calibration.
+- **Ambient lighting bumped** `0.3 → 0.35` to compensate for the
+  removed fill-light term.
+
+### Technical
+
+- 90 automated tests (85 previous + 5 new covering gpu_upload
+  degenerate cases and shader parity).
+
 ## v0.2.0 (2026-04-12)
 
 Production readiness release.

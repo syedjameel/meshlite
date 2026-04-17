@@ -54,10 +54,10 @@ class ViewOptions:
     show_axes: bool = True
     background: tuple[float, float, float, float] = DEFAULT_BACKGROUND
 
-    # Lighting params — sent to the shader each frame. Matching MeshInspector defaults.
-    ambient_strength: float = 0.2
-    specular_strength: float = 0.4
-    specular_exponent: float = 35.0
+    # Lighting params — sent to the shader each frame. Matching the reference meshviewer.
+    ambient_strength: float = 0.35
+    specular_strength: float = 0.6
+    specular_exponent: float = 64.0
 
 
 class Renderer:
